@@ -14,8 +14,8 @@ async function login() {
   const codeChallenge = await generateCodeChallenge(codeVerifier);
   
   // Save state and code verifier for callback
-  sessionStorage.setItem('oauth_state', state);
-  sessionStorage.setItem('oauth_code_verifier', codeVerifier);
+  localStorage.setItem('oauth_state', state);
+  localStorage.setItem('oauth_code_verifier', codeVerifier);
   
   // Build authorization URL
   const authUrl = new URL(CONFIG.nextcloud.endpoints.oauth.authorize, serverUrl);

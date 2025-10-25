@@ -189,20 +189,13 @@ function setupEventListeners() {
  * Handle login
  */
 async function handleLogin() {
-  try {
-    showStatus(t('auth.loggingIn'), 'info');
-    
-    await login();
-    
-    showStatus(t('auth.loginSuccess'), 'success');
-    
-    // Reload meeting data
-    await loadMeetingData();
-    showView('main-view');
-  } catch (error) {
-    console.error('Login error:', error);
-    showError(t('auth.loginFailed') + ': ' + error.message);
-  }
+  // Show loading message
+  showStatus(t('auth.loggingIn'), 'info');
+  
+  // Redirect to Nextcloud OAuth2 (will leave this page)
+  await login();
+  
+  // Note: Code after login() will not execute because we redirect away
 }
 
 /**
