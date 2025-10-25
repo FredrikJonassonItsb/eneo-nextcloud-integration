@@ -27,35 +27,38 @@ async function login() {
   authUrl.searchParams.append('code_challenge', codeChallenge);
   authUrl.searchParams.append('code_challenge_method', 'S256');
   
-  // Open authorization URL in dialog or new window
-  if (typeof Office !== 'undefined' && Office.context && Office.context.ui) {
-    // Use Office dialog API
-    Office.context.ui.displayDialogAsync(
-      authUrl.toString(),
-      { height: 60, width: 30 },
-      (result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-          const dialog = result.value;
-          dialog.addEventHandler(Office.EventType.DialogMessageReceived, handleDialogMessage);
-          dialog.addEventHandler(Office.EventType.DialogEventReceived, handleDialogEvent);
-        } else {
-          console.error('Failed to open auth dialog:', result.error);
-          throw new Error(t('auth.loginFailed'));
-        }
-      }
-    );
-  } else {
-    // Fallback: open in popup window
-    const popup = window.open(authUrl.toString(), 'nextcloud-auth', 'width=600,height=700');
-    
-    // Listen for message from popup
-    window.addEventListener('message', (event) => {
-      if (event.origin === new URL(CONFIG.oauth.redirectUri).origin) {
-        handleAuthCallback(event.data);
+  // Open authorization URL in popup window
+  // Note: Office Dialog API has issues in Outlook Web, so we use popup instead
+  const popup = window.open(authUrl.toString(), 'nextcloud-auth', 'width=600,height=700,location=yes,menubar=no,toolbar=no');
+  
+  if (!popup) {
+    throw new Error(t('auth.popupBlocked'));
+  }
+  
+  // Listen for message from popup
+  const messageHandler = (event) => {
+    // Verify origin
+    const redirectOrigin = new URL(CONFIG.oauth.redirectUri).origin;
+    if (event.origin === redirectOrigin || event.origin === window.location.origin) {
+      console.log('Received auth callback:', event.data);
+      handleAuthCallback(event.data);
+      if (popup && !popup.closed) {
         popup.close();
       }
-    });
-  }
+      window.removeEventListener('message', messageHandler);
+    }
+  };
+  
+  window.addEventListener('message', messageHandler);
+  
+  // Check if popup was closed by user
+  const popupCheck = setInterval(() => {
+    if (popup.closed) {
+      clearInterval(popupCheck);
+      window.removeEventListener('message', messageHandler);
+      console.log('Auth popup was closed by user');
+    }
+  }, 1000);
 }
 
 /**
