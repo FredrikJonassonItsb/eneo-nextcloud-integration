@@ -81,25 +81,12 @@
             }
             
             if (code && state) {
-                // Send code and state to parent window
-                if (window.opener) {
-                    // Popup window
-                    window.opener.postMessage({
-                        type: 'oauth-success',
-                        code: code,
-                        state: state
-                    }, '*');
-                    window.close();
-                } else if (window.parent && window.parent !== window) {
-                    // Office dialog
-                    if (typeof Office !== 'undefined' && Office.context && Office.context.ui) {
-                        Office.context.ui.messageParent(JSON.stringify({
-                            type: 'oauth-success',
-                            code: code,
-                            state: state
-                        }));
-                    }
-                }
+                // Store auth data and redirect back to taskpane
+                sessionStorage.setItem('oauth_code', code);
+                sessionStorage.setItem('oauth_state', state);
+                
+                // Redirect back to taskpane
+                window.location.href = '../taskpane/taskpane.html?auth=success';
             } else {
                 console.error('Missing code or state parameter');
             }

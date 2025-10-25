@@ -8,20 +8,61 @@ let currentMeeting = null;
 /**
  * Initialize Office Add-in
  */
-Office.onReady((info) => {
-  if (info.host === Office.HostType.Outlook) {
-    console.log('Office Add-in initialized');
-    
-    // Initialize UI
+if (typeof Office !== 'undefined' && Office.onReady) {
+  Office.onReady((info) => {
+    if (info.host === Office.HostType.Outlook) {
+      console.log('Office Add-in initialized');
+      
+      // Initialize UI
+      initializeUI();
+      
+      // Check if returning from OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('auth') === 'success') {
+        handleOAuthReturn();
+      } else {
+        // Check authentication status
+        checkAuthStatus();
+      }
+      
+      // Set up event listeners
+      setupEventListeners();
+    }
+  });
+} else {
+  // Running outside Outlook - for testing
+  console.log('Running in standalone mode (not in Outlook)');
+  document.addEventListener('DOMContentLoaded', () => {
     initializeUI();
-    
-    // Check authentication status
-    checkAuthStatus();
-    
-    // Set up event listeners
     setupEventListeners();
-  }
-});
+    
+    // Show demo mode message
+    showView('login-view');
+    const loginView = document.getElementById('login-view');
+    if (loginView) {
+      loginView.innerHTML = `
+        <div class="login-container">
+          <div class="login-icon">
+            <img src="../assets/icon-64.png" alt="Nextcloud">
+          </div>
+          <h2>Demo Mode</h2>
+          <p class="login-description">
+            This add-in must be loaded within Microsoft Outlook to function properly.
+            <br><br>
+            To install in Outlook:
+            <br>
+            1. Open Outlook Web (outlook.office.com)
+            <br>
+            2. Go to Settings → Add-ins
+            <br>
+            3. Add from URL: <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:12px;">https://8080-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer/manifest-sandbox.xml</code>
+          </p>
+          <a href="https://outlook.office.com" class="btn btn-primary" target="_blank">Open Outlook Web</a>
+        </div>
+      `;
+    }
+  });
+}
 
 /**
  * Initialize UI with translations

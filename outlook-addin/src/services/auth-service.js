@@ -27,38 +27,10 @@ async function login() {
   authUrl.searchParams.append('code_challenge', codeChallenge);
   authUrl.searchParams.append('code_challenge_method', 'S256');
   
-  // Open authorization URL in popup window
-  // Note: Office Dialog API has issues in Outlook Web, so we use popup instead
-  const popup = window.open(authUrl.toString(), 'nextcloud-auth', 'width=600,height=700,location=yes,menubar=no,toolbar=no');
-  
-  if (!popup) {
-    throw new Error(t('auth.popupBlocked'));
-  }
-  
-  // Listen for message from popup
-  const messageHandler = (event) => {
-    // Verify origin
-    const redirectOrigin = new URL(CONFIG.oauth.redirectUri).origin;
-    if (event.origin === redirectOrigin || event.origin === window.location.origin) {
-      console.log('Received auth callback:', event.data);
-      handleAuthCallback(event.data);
-      if (popup && !popup.closed) {
-        popup.close();
-      }
-      window.removeEventListener('message', messageHandler);
-    }
-  };
-  
-  window.addEventListener('message', messageHandler);
-  
-  // Check if popup was closed by user
-  const popupCheck = setInterval(() => {
-    if (popup.closed) {
-      clearInterval(popupCheck);
-      window.removeEventListener('message', messageHandler);
-      console.log('Auth popup was closed by user');
-    }
-  }, 1000);
+  // Redirect to authorization URL
+  // Note: Popup windows are blocked in Outlook Web, so we use full redirect
+  console.log('Redirecting to:', authUrl.toString());
+  window.location.href = authUrl.toString();
 }
 
 /**

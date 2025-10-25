@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <h1>Test Page</h1>
+    <div id="output">Loading...</div>
+    
+    <script>
+        console.log('Script loaded');
+        document.getElementById('output').textContent = 'JavaScript works! Office is ' + (typeof Office !== 'undefined' ? 'available' : 'NOT available');
+        
+        // Test if Office.js is loaded
+        if (typeof Office === 'undefined') {
+            console.log('Office.js is NOT loaded - this is expected outside Outlook');
+            document.getElementById('output').innerHTML += '<br><br>This is normal when viewing outside Outlook.<br>The add-in will work correctly when loaded in Outlook.';
+        }
+    </script>
+</body>
+</html>
+
