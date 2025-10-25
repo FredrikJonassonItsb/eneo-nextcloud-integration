@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nextcloud Talk för Outlook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0082c9 0%, #30a0db 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .header p {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        .section h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #0082c9;
+        }
+        
+        .section p {
+            font-size: 18px;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .feature {
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0082c9;
+        }
+        
+        .feature p {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .cta {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f5f5f5;
+        }
+        
+        .cta h2 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #0082c9 0%, #30a0db 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .installation {
+            background: #f9f9f9;
+            padding: 40px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+        
+        .installation h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #0082c9;
+        }
+        
+        .installation ol {
+            margin-left: 24px;
+        }
+        
+        .installation li {
+            font-size: 16px;
+            margin-bottom: 12px;
+            line-height: 1.8;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .footer {
+            background: #2d2d2d;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .footer a {
+            color: #30a0db;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎥 Nextcloud Talk för Outlook</h1>
+        <p>Integrera Nextcloud Talk-videomöten direkt i Outlook-kalendern</p>
+    </div>
+    
+    <div class="container">
+        <div class="section">
+            <h2>Om tillägget</h2>
+            <p>
+                Nextcloud Talk för Outlook är ett Microsoft Outlook-tillägg som gör det möjligt att skapa 
+                Nextcloud Talk-videomöten direkt från Outlook-kalendern. Tillägget integrerar sömlöst med 
+                både Nextcloud Talk och Nextcloud Kalender för en komplett mötesupplevelse.
+            </p>
+            <p>
+                Detta tillägg är utvecklat för Sundsvalls kommun som en del av Eneo-projektet, men kan 
+                användas av alla organisationer som använder Nextcloud och Microsoft 365.
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>Funktioner</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>✨ Enkel integration</h3>
+                    <p>Skapa Nextcloud Talk-möten med ett klick direkt från Outlook-kalendern.</p>
+                </div>
+                <div class="feature">
+                    <h3>🔐 Säker autentisering</h3>
+                    <p>OAuth2-baserad inloggning med stöd för SSO och Nextclouds inloggningssystem.</p>
+                </div>
+                <div class="feature">
+                    <h3>📅 Kalendersynk</h3>
+                    <p>Automatisk synkronisering av möten till Nextcloud Kalender.</p>
+                </div>
+                <div class="feature">
+                    <h3>🗑️ Teams-borttagning</h3>
+                    <p>Automatisk borttagning av Microsoft Teams-länkar när Nextcloud Talk läggs till.</p>
+                </div>
+                <div class="feature">
+                    <h3>🌍 Flerspråksstöd</h3>
+                    <p>Stöd för svenska och engelska med automatisk språkdetektering.</p>
+                </div>
+                <div class="feature">
+                    <h3>💻 Plattformsoberoende</h3>
+                    <p>Fungerar i Outlook Web, Outlook Desktop (Windows) och Outlook Desktop (Mac).</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="installation">
+                <h3>Installation</h3>
+                <ol>
+                    <li>
+                        <strong>Ladda ner manifestfilen:</strong><br>
+                        <a href="manifest.xml" download>manifest.xml</a>
+                    </li>
+                    <li>
+                        <strong>Öppna Outlook Web:</strong><br>
+                        Gå till <a href="https://outlook.office.com" target="_blank">outlook.office.com</a>
+                    </li>
+                    <li>
+                        <strong>Öppna tilläggsinställningar:</strong><br>
+                        Klicka på kugghjulet (⚙️) → "Visa alla Outlook-inställningar" → "Anpassa åtgärder" → "Tillägg"
+                    </li>
+                    <li>
+                        <strong>Lägg till tillägg:</strong><br>
+                        Klicka på "+ Lägg till från fil" och välj den nedladdade manifest.xml-filen
+                    </li>
+                    <li>
+                        <strong>Klart!</strong><br>
+                        Tillägget visas nu i Outlook när du skapar eller redigerar kalenderhändelser
+                    </li>
+                </ol>
+                
+                <h3 style="margin-top: 40px;">För administratörer (M365)</h3>
+                <p>
+                    Administratörer kan distribuera tillägget centralt till alla användare via Microsoft 365 Admin Center:
+                </p>
+                <ol>
+                    <li>Gå till <a href="https://admin.microsoft.com" target="_blank">Microsoft 365 Admin Center</a></li>
+                    <li>Navigera till "Inställningar" → "Integrerade appar"</li>
+                    <li>Klicka på "Ladda upp anpassade appar"</li>
+                    <li>Välj "Ladda upp manifestfil" och ladda upp manifest.xml</li>
+                    <li>Välj vilka användare eller grupper som ska ha tillgång till tillägget</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Konfiguration</h2>
+            <p>
+                För att tillägget ska fungera behöver du konfigurera följande i din Nextcloud-installation:
+            </p>
+            
+            <h3>1. Aktivera Nextcloud Talk och OAuth2</h3>
+            <div class="code-block">
+# Aktivera nödvändiga appar
+php occ app:enable spreed
+php occ app:enable oauth2
+            </div>
+            
+            <h3>2. Skapa OAuth2-klient</h3>
+            <p>
+                Gå till Nextcloud → Inställningar → Säkerhet → OAuth 2.0 och skapa en ny klient:
+            </p>
+            <ul>
+                <li><strong>Namn:</strong> outlook-nextcloud-addin</li>
+                <li><strong>Redirect URI:</strong> https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/callback.html</li>
+            </ul>
+            
+            <h3>3. Uppdatera config.js</h3>
+            <p>
+                Uppdatera <code>src/utils/config.js</code> med dina OAuth2-credentials och Nextcloud-server-URL.
+            </p>
+        </div>
+    </div>
+    
+    <div class="cta">
+        <h2>Kom igång idag</h2>
+        <p style="font-size: 18px; margin-bottom: 30px;">
+            Ladda ner manifestfilen och börja använda Nextcloud Talk i Outlook
+        </p>
+        <a href="manifest.xml" download class="btn">Ladda ner manifest.xml</a>
+    </div>
+    
+    <div class="footer">
+        <p>
+            <strong>Nextcloud Talk för Outlook</strong> v2.0.0<br>
+            Utvecklat för Sundsvalls kommun | Eneo-projektet
+        </p>
+        <p style="margin-top: 20px;">
+            <a href="https://github.com/FredrikJonassonItsb/eneo-nextcloud-integration" target="_blank">
+                GitHub Repository
+            </a> | 
+            <a href="https://github.com/FredrikJonassonItsb/eneo-nextcloud-integration/blob/feature/outlook-nextcloud-talk-addin/docs/outlook-addin-requirements.md" target="_blank">
+                Dokumentation
+            </a>
+        </p>
+    </div>
+</body>
+</html>
+

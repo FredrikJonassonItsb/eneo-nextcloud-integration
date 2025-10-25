@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Callback</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0082c9 0%, #30a0db 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Autentisering pågår...</h2>
+        <p>Du kommer snart att omdirigeras tillbaka.</p>
+    </div>
+    
+    <script>
+        (function() {
+            // Parse URL parameters
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const state = params.get('state');
+            const error = params.get('error');
+            
+            if (error) {
+                console.error('OAuth error:', error);
+                
+                // Send error to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'oauth-error',
+                        error: error
+                    }, '*');
+                    window.close();
+                } else if (window.parent && window.parent !== window) {
+                    // Office dialog
+                    if (typeof Office !== 'undefined' && Office.context && Office.context.ui) {
+                        Office.context.ui.messageParent(JSON.stringify({
+                            type: 'oauth-error',
+                            error: error
+                        }));
+                    }
+                }
+                return;
+            }
+            
+            if (code && state) {
+                // Send code and state to parent window
+                if (window.opener) {
+                    // Popup window
+                    window.opener.postMessage({
+                        type: 'oauth-success',
+                        code: code,
+                        state: state
+                    }, '*');
+                    window.close();
+                } else if (window.parent && window.parent !== window) {
+                    // Office dialog
+                    if (typeof Office !== 'undefined' && Office.context && Office.context.ui) {
+                        Office.context.ui.messageParent(JSON.stringify({
+                            type: 'oauth-success',
+                            code: code,
+                            state: state
+                        }));
+                    }
+                }
+            } else {
+                console.error('Missing code or state parameter');
+            }
+        })();
+    </script>
+    
+    <!-- Office.js for dialog support -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</body>
+</html>
+
