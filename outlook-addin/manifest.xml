@@ -46,19 +46,12 @@
     </Sets>
   </Requirements>
   
-  <!-- Form Settings -->
+  <!-- Form Settings (Required for validation, but ignored when VersionOverrides is present) -->
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
         <SourceLocation DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html"/>
-        <RequestedHeight>450</RequestedHeight>
-      </DesktopSettings>
-    </Form>
-    
-    <Form xsi:type="ItemEdit">
-      <DesktopSettings>
-        <SourceLocation DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html"/>
-        <RequestedHeight>450</RequestedHeight>
+        <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
   </FormSettings>
