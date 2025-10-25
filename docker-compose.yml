@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # TRAEFIK - Reverse Proxy
+  # =============================================================================
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - eneo-network
+
+  # =============================================================================
+  # NEXTCLOUD STACK
+  # =============================================================================
+  nextcloud-db:
+    image: postgres:15-alpine
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${NEXTCLOUD_DB_NAME:-nextcloud}
+      POSTGRES_USER: ${NEXTCLOUD_DB_USER:-nextcloud}
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-changeme}
+    volumes:
+      - nextcloud-db-data:/var/lib/postgresql/data
+    networks:
+      - eneo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NEXTCLOUD_DB_USER:-nextcloud}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud-redis:
+    image: redis:7-alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    networks:
+      - eneo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud:
+    image: nextcloud:27-apache
+    container_name: nextcloud
+    restart: unless-stopped
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+      nextcloud-redis:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: ${NEXTCLOUD_DB_NAME:-nextcloud}
+      POSTGRES_USER: ${NEXTCLOUD_DB_USER:-nextcloud}
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-changeme}
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:-changeme}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NEXTCLOUD_TRUSTED_DOMAINS:-localhost}
+      REDIS_HOST: nextcloud-redis
+      OVERWRITEPROTOCOL: ${PROTOCOL:-http}
+      OVERWRITEHOST: ${DOMAIN:-localhost}
+    volumes:
+      - nextcloud-data:/var/www/html
+      - ./nextcloud/apps:/var/www/html/custom_apps
+      - ./nextcloud/config:/var/www/html/config
+    networks:
+      - eneo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.nextcloud.entrypoints=web"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      - "traefik.http.routers.nextcloud.priority=1"
+
+  # =============================================================================
+  # ENEO STACK
+  # =============================================================================
+  eneo-db:
+    image: pgvector/pgvector:pg15
+    container_name: eneo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ENEO_DB_NAME:-eneo}
+      POSTGRES_USER: ${ENEO_DB_USER:-eneo}
+      POSTGRES_PASSWORD: ${ENEO_DB_PASSWORD:-changeme}
+    volumes:
+      - eneo-db-data:/var/lib/postgresql/data
+      - ./eneo/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - eneo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENEO_DB_USER:-eneo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eneo-redis:
+    image: redis:7-alpine
+    container_name: eneo-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${ENEO_REDIS_PASSWORD:-changeme}
+    networks:
+      - eneo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${ENEO_REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eneo-backend:
+    build:
+      context: ./eneo/backend
+      dockerfile: Dockerfile
+    container_name: eneo-backend
+    restart: unless-stopped
+    depends_on:
+      eneo-db:
+        condition: service_healthy
+      eneo-redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: ${ENEO_DB_HOST:-eneo-db}
+      DB_PORT: ${ENEO_DB_PORT:-5432}
+      DB_NAME: ${ENEO_DB_NAME:-eneo}
+      DB_USER: ${ENEO_DB_USER:-eneo}
+      DB_PASSWORD: ${ENEO_DB_PASSWORD:-changeme}
+      # Redis
+      REDIS_HOST: ${ENEO_REDIS_HOST:-eneo-redis}
+      REDIS_PORT: ${ENEO_REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${ENEO_REDIS_PASSWORD:-changeme}
+      # API
+      API_SECRET_KEY: ${ENEO_API_SECRET_KEY:-changeme}
+      API_HOST: ${ENEO_API_HOST:-0.0.0.0}
+      API_PORT: ${ENEO_API_PORT:-8000}
+      # OAuth2
+      OAUTH2_CLIENT_ID: ${OAUTH2_CLIENT_ID}
+      OAUTH2_CLIENT_SECRET: ${OAUTH2_CLIENT_SECRET}
+      OAUTH2_AUTHORIZE_URL: ${OAUTH2_AUTHORIZE_URL}
+      OAUTH2_TOKEN_URL: ${OAUTH2_TOKEN_URL}
+      OAUTH2_USERINFO_URL: ${OAUTH2_USERINFO_URL}
+      OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI}
+      # Nextcloud
+      NEXTCLOUD_URL: http://nextcloud
+      NEXTCLOUD_WEBDAV_PATH: /remote.php/webdav
+      # AI Model
+      AI_MODEL_TYPE: ${AI_MODEL_TYPE:-local}
+      AI_MODEL_NAME: ${AI_MODEL_NAME:-llama2}
+      AI_MODEL_PATH: ${AI_MODEL_PATH:-/models/model.gguf}
+      # Vector DB
+      VECTOR_DIMENSION: ${VECTOR_DIMENSION:-384}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./eneo/backend:/app
+      - eneo-models:/models
+    networks:
+      - eneo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.eneo-backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/eneo/api`)"
+      - "traefik.http.routers.eneo-backend.entrypoints=web"
+      - "traefik.http.services.eneo-backend.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.eneo-backend-stripprefix.stripprefix.prefixes=/eneo/api"
+      - "traefik.http.routers.eneo-backend.middlewares=eneo-backend-stripprefix"
+      - "traefik.http.routers.eneo-backend.priority=10"
+
+  eneo-frontend:
+    build:
+      context: ./eneo/frontend
+      dockerfile: Dockerfile
+    container_name: eneo-frontend
+    restart: unless-stopped
+    depends_on:
+      - eneo-backend
+    environment:
+      PUBLIC_API_URL: ${ENEO_PUBLIC_API_URL:-http://localhost/eneo/api}
+      PUBLIC_NEXTCLOUD_URL: ${PROTOCOL:-http}://${DOMAIN:-localhost}
+    volumes:
+      - ./eneo/frontend:/app
+      - /app/node_modules
+    networks:
+      - eneo-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.eneo-frontend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/eneo`)"
+      - "traefik.http.routers.eneo-frontend.entrypoints=web"
+      - "traefik.http.services.eneo-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.eneo-frontend-stripprefix.stripprefix.prefixes=/eneo"
+      - "traefik.http.routers.eneo-frontend.middlewares=eneo-frontend-stripprefix"
+      - "traefik.http.routers.eneo-frontend.priority=5"
+
+networks:
+  eneo-network:
+    driver: bridge
+
+volumes:
+  nextcloud-db-data:
+  nextcloud-data:
+  eneo-db-data:
+  eneo-models:
+
