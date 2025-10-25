@@ -1,13 +1,12 @@
 /**
- * Configuration for Nextcloud Talk Outlook Add-in
+ * Configuration for Nextcloud Talk Outlook Add-in (SANDBOX VERSION)
  * 
- * This file contains all configuration settings for the add-in.
- * Update the values marked with <PLACEHOLDER> with actual values from your Nextcloud installation.
+ * This file contains all configuration settings for the add-in running in Manus sandbox.
  */
 
 const CONFIG = {
   nextcloud: {
-    // Nextcloud server URL - Update this with your Manus sandbox public URL
+    // Nextcloud server URL - Manus sandbox
     serverUrl: 'https://9000-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer',
     
     endpoints: {
@@ -33,14 +32,14 @@ const CONFIG = {
   },
   
   oauth: {
-    // OAuth2 Client ID - Get this from Nextcloud → Settings → Security → OAuth 2.0
-    clientId: '<CLIENT_ID>',
+    // OAuth2 Client ID - To be configured in Nextcloud
+    clientId: 'ZgFFOcFHx6P5jjfibgzSKFwonIjzwdsvkchsAjSgyZiXbjP1uRWg0YdvuUgnLhXj',
     
-    // OAuth2 Client Secret - Get this from Nextcloud → Settings → Security → OAuth 2.0
-    clientSecret: '<CLIENT_SECRET>',
+    // OAuth2 Client Secret - To be configured in Nextcloud
+    clientSecret: '4MgOaucQbGQGuPBbRuugtPq38KdtXiHHdV3FYHitOf0qo4SREkzjcktunLry656X',
     
-    // Redirect URI - Must match the OAuth2 client configuration in Nextcloud
-    redirectUri: 'https://fredrikjonassonitsb.github.io/outlook-nextcloud-talk-addin/src/taskpane/callback.html',
+    // Redirect URI - Sandbox URL
+    redirectUri: 'https://8080-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer/src/taskpane/callback.html',
     
     // OAuth2 scope
     scope: 'openid profile email',
@@ -51,10 +50,10 @@ const CONFIG = {
   
   app: {
     // Application name
-    name: 'Nextcloud Talk for Outlook',
+    name: 'Nextcloud Talk for Outlook (Sandbox)',
     
     // Application version
-    version: '2.0.0',
+    version: '2.0.0-sandbox',
     
     // Default locale
     defaultLocale: 'sv-SE',
