@@ -6,7 +6,9 @@
 const translations = {
   'sv-SE': {
     // General
-    'app.name': 'Nextcloud Talk för Outlook',
+    'app.name': 'Nextcloud Talk Integration för Outlook',
+    'app.version': 'v2.0.0',
+    'app.buildDate': '2025-10-25 10:50',
     'app.loading': 'Laddar...',
     'app.error': 'Ett fel uppstod',
     
