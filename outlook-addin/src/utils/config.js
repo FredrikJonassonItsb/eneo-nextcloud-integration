@@ -38,8 +38,8 @@ const CONFIG = {
     // OAuth2 Client Secret - To be configured in Nextcloud
     clientSecret: '4MgOaucQbGQGuPBbRuugtPq38KdtXiHHdV3FYHitOf0qo4SREkzjcktunLry656X',
     
-    // Redirect URI - Sandbox URL
-    redirectUri: 'https://8080-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer/src/taskpane/callback.html',
+    // Redirect URI - GitHub Pages URL
+    redirectUri: 'https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/callback.html',
     
     // OAuth2 scope
     scope: 'openid profile email',

@@ -8,7 +8,7 @@
   
   <!-- Basic Settings -->
   <Id>b3e7c9f2-8d1a-4e6b-9c5f-2a7d8e3b6c1f</Id>
-  <Version>3.1.1.0</Version>
+  <Version>3.1.2.0</Version>
   <ProviderName>ITSL Solutions</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   
@@ -148,7 +148,7 @@
         </bt:Images>
         <bt:Urls>
           <bt:Url id="Commands.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/commands/commands.html"/>
-          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=3.1.1"/>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=3.1.2"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Nextcloud Talk">
