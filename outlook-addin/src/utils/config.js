@@ -32,11 +32,11 @@ const CONFIG = {
   },
   
   oauth: {
-    // OAuth2 Client ID - To be configured in Nextcloud
-    clientId: 'ZgFFOcFHx6P5jjfibgzSKFwonIjzwdsvkchsAjSgyZiXbjP1uRWg0YdvuUgnLhXj',
+    // OAuth2 Client ID - Configured in Nextcloud
+    clientId: 'QLyLhVz8eRfT3AZAXn9OXtxNl8L7q4t7jOE98qNLMujTMtVMGyTGlmKiK3JHasEB',
     
-    // OAuth2 Client Secret - To be configured in Nextcloud
-    clientSecret: '4MgOaucQbGQGuPBbRuugtPq38KdtXiHHdV3FYHitOf0qo4SREkzjcktunLry656X',
+    // OAuth2 Client Secret - Configured in Nextcloud
+    clientSecret: 'jIs4FrXFcFv9j9gTe4Y2EyBf18o7r9PJPPN4v99yZKAvwbNzh0GKLZp4pZe2p8Mz',
     
     // Redirect URI - GitHub Pages URL
     redirectUri: 'https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/callback.html',
