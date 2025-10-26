@@ -7,14 +7,14 @@
   xsi:type="MailApp">
   
   <!-- Basic Settings -->
-  <Id>a9d8f7e6-5c4b-3a2d-1e0f-9b8a7c6d5e4f</Id>
-  <Version>2.0.0.1</Version>
+  <Id>b3e7c9f2-8d1a-4e6b-9c5f-2a7d8e3b6c1f</Id>
+  <Version>3.0.0.0</Version>
   <ProviderName>ITSL Solutions</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   
   <!-- Display Name -->
-  <DisplayName DefaultValue="Nextcloud Talk for Outlook">
-    <Override Locale="sv-SE" Value="Nextcloud Talk för Outlook"/>
+  <DisplayName DefaultValue="Nextcloud Talk Integration">
+    <Override Locale="sv-SE" Value="Nextcloud Talk Integration"/>
   </DisplayName>
   
   <!-- Description -->
@@ -148,7 +148,7 @@
         </bt:Images>
         <bt:Urls>
           <bt:Url id="Commands.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/commands/commands.html"/>
-          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=20251025-1135"/>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=3.0.0"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Nextcloud Talk">
