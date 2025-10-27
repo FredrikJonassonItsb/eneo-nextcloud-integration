@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nextcloud Talk Integration för Outlook</title>
+    
+    <!-- Office.js -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="taskpane.css">
+    
+    <!-- Scripts -->
+    <script src="../utils/config.js"></script>
+    <script src="../utils/i18n.js"></script>
+    <script src="../utils/storage.js"></script>
+    <script src="../services/auth-service.js"></script>
+    <script src="../services/nextcloud-api.js"></script>
+    <script src="../services/outlook-service.js"></script>
+    <script src="taskpane-oauth-handler.js"></script>
+  <script src="taskpane.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <img src="../assets/icon-32.png" alt="Nextcloud" class="logo">
+                <h1 class="title" data-i18n="app.name">Nextcloud Talk för Outlook</h1>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Loading State -->
+            <div id="loading-view" class="view">
+                <div class="loading-spinner"></div>
+                <p data-i18n="app.loading">Laddar...</p>
+            </div>
+            
+            <!-- Login View -->
+            <div id="login-view" class="view hidden">
+                <div class="login-container">
+                    <div class="login-icon">
+                        <img src="../assets/icon-64.png" alt="Nextcloud">
+                    </div>
+                    <h2 data-i18n="auth.loginPrompt">Logga in på Nextcloud för att fortsätta</h2>
+                    <p class="login-description">
+                        För att skapa Nextcloud Talk-möten behöver du logga in med ditt Nextcloud-konto.
+                    </p>
+                    <button id="login-button" class="btn btn-primary" data-i18n="auth.loginButton">
+                        Logga in med Nextcloud
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Main View (Authenticated) -->
+            <div id="main-view" class="view hidden">
+                <!-- User Info -->
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <span id="user-initials"></span>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="user-name"></div>
+                        <div class="user-email" id="user-email"></div>
+                    </div>
+                    <button id="logout-button" class="btn btn-link" data-i18n="auth.logout">Logga ut</button>
+                </div>
+                
+                <!-- Meeting Info -->
+                <div class="meeting-info">
+                    <h3 data-i18n="meeting.create">Skapa Nextcloud Talk-möte</h3>
+                    <div class="meeting-details">
+                        <div class="detail-item">
+                            <label>Mötesämne:</label>
+                            <span id="meeting-subject"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Starttid:</label>
+                            <span id="meeting-start"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Sluttid:</label>
+                            <span id="meeting-end"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Deltagare:</label>
+                            <span id="meeting-attendees"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Meeting Settings -->
+                <div class="meeting-settings">
+                    <h4 data-i18n="settings.title">Mötesinställningar</h4>
+                    
+                    <div class="form-group">
+                        <label for="room-name" data-i18n="meeting.roomName">Mötesnamn</label>
+                        <input 
+                            type="text" 
+                            id="room-name" 
+                            class="form-control" 
+                            data-i18n-placeholder="meeting.roomNamePlaceholder"
+                            placeholder="Ange mötesnamn">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="allow-guests" checked>
+                            <span data-i18n="settings.allowGuests">Tillåt gäster</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="room-password" data-i18n="settings.password">Lösenord (valfritt)</label>
+                        <input 
+                            type="password" 
+                            id="room-password" 
+                            class="form-control" 
+                            data-i18n-placeholder="settings.passwordPlaceholder"
+                            placeholder="Valfritt lösenord">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="remove-teams-link" checked>
+                            <span>Ta bort Teams-länk automatiskt</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="create-calendar-event" checked>
+                            <span>Skapa händelse i Nextcloud Kalender</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="actions">
+                    <button id="create-meeting-button" class="btn btn-primary btn-large" data-i18n="meeting.addLink">
+                        Lägg till Nextcloud Talk-möte
+                    </button>
+                </div>
+                
+                <!-- Status Message -->
+                <div id="status-message" class="status-message hidden">
+                    <span id="status-text"></span>
+                </div>
+            </div>
+            
+            <!-- Error View -->
+            <div id="error-view" class="view hidden">
+                <div class="error-container">
+                    <div class="error-icon">⚠️</div>
+                    <h2 data-i18n="app.error">Ett fel uppstod</h2>
+                    <p id="error-message"></p>
+                    <button id="retry-button" class="btn btn-primary" data-i18n="button.retry">
+                        Försök igen
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="version" id="app-version">v3.2.0</span>
+                <span class="separator">•</span>
+                <span class="build-date" id="app-build-date">2025-10-26 20:15</span>
+                <span class="separator">•</span>
+                <a href="https://github.com/FredrikJonassonItsb/eneo-nextcloud-integration" target="_blank">
+                    GitHub
+                </a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
+

@@ -1,365 +1,288 @@
 /**
- * Nextcloud API Service
+ * Nextcloud API service
  * Handles communication with Nextcloud Talk and Calendar APIs
  */
 
 /**
  * Create a Nextcloud Talk room
- * @param {object} options - Room creation options
+ * @param {object} options - Room options
  * @param {string} options.roomName - Name of the room
- * @param {number} options.roomType - Room type (1=One-to-one, 2=Group, 3=Public)
- * @param {boolean} options.allowGuests - Allow guests to join
- * @param {string} options.password - Optional room password
- * @returns {Promise<object>} Created room data
+ * @param {number} options.roomType - Room type (3 = public)
+ * @returns {Promise<object>} Room data with token and URL
  */
 async function createTalkRoom(options) {
-  const {
-    roomName,
-    roomType = CONFIG.meeting.defaultRoomType,
-    allowGuests = CONFIG.meeting.allowGuests,
-    password = null
-  } = options;
-  
-  const serverUrl = getServerUrl();
-  const accessToken = getAccessToken();
-  
-  if (!accessToken) {
-    throw new Error(t('auth.notAuthenticated'));
-  }
-  
-  const url = new URL(CONFIG.nextcloud.endpoints.talkRoom, serverUrl);
-  
-  const body = {
-    roomType: roomType,
-    roomName: roomName
-  };
-  
   try {
-    const response = await fetchWithAuth(url.toString(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'OCS-APIRequest': 'true',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
+    const serverUrl = getServerUrl();
+    if (!serverUrl) {
+      throw new Error('Nextcloud server URL not configured');
+    }
+    
+    const headers = await getAuthHeaders();
+    
+    const body = {
+      roomType: options.roomType || CONFIG.meeting.defaultRoomType,
+      roomName: options.roomName || 'Meeting'
+    };
+    
+    const response = await fetch(
+      `${serverUrl}${CONFIG.nextcloud.endpoints.talkRoom}`,
+      {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      }
+    );
     
     if (!response.ok) {
-      throw new Error(`Failed to create Talk room: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Create room error:', errorText);
+      throw new Error('Failed to create Talk room');
     }
     
     const data = await response.json();
     const room = data.ocs.data;
     
-    // Set password if provided
-    if (password) {
-      await setRoomPassword(room.token, password);
-    }
-    
-    // Configure guest access
-    if (allowGuests) {
-      await setRoomGuestAccess(room.token, true);
-    }
-    
-    return room;
+    return {
+      token: room.token,
+      name: room.name || room.displayName,
+      url: `${serverUrl}/call/${room.token}`,
+      roomId: room.id
+    };
   } catch (error) {
-    console.error('Create Talk room error:', error);
-    throw new Error(t('meeting.failed'));
-  }
-}
-
-/**
- * Set room password
- * @param {string} token - Room token
- * @param {string} password - Room password
- */
-async function setRoomPassword(token, password) {
-  const serverUrl = getServerUrl();
-  const url = new URL(`${CONFIG.nextcloud.endpoints.talkRoom}/${token}/password`, serverUrl);
-  
-  const body = {
-    password: password
-  };
-  
-  try {
-    const response = await fetchWithAuth(url.toString(), {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'OCS-APIRequest': 'true',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to set room password: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Set room password error:', error);
+    console.error('createTalkRoom error:', error);
     throw error;
   }
 }
 
 /**
- * Set room guest access
- * @param {string} token - Room token
- * @param {boolean} allow - Allow guests
- */
-async function setRoomGuestAccess(token, allow) {
-  const serverUrl = getServerUrl();
-  const url = new URL(`${CONFIG.nextcloud.endpoints.talkRoom}/${token}`, serverUrl);
-  
-  const body = {
-    lobbyState: allow ? 0 : 1  // 0=No lobby, 1=Lobby enabled
-  };
-  
-  try {
-    const response = await fetchWithAuth(url.toString(), {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'OCS-APIRequest': 'true',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to set guest access: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Set guest access error:', error);
-    throw error;
-  }
-}
-
-/**
- * Add participant to Talk room
- * @param {string} token - Room token
- * @param {string} participantId - Participant user ID or email
- * @param {object} options - Participant options
- * @returns {Promise<object>} Participant data
- */
-async function addParticipant(token, participantId, options = {}) {
-  const serverUrl = getServerUrl();
-  const endpoint = CONFIG.nextcloud.endpoints.talkParticipants.replace('{token}', token);
-  const url = new URL(endpoint, serverUrl);
-  
-  const body = {
-    newParticipant: participantId,
-    source: 'users'  // 'users', 'groups', 'emails'
-  };
-  
-  try {
-    const response = await fetchWithAuth(url.toString(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'OCS-APIRequest': 'true',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to add participant: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.ocs.data;
-  } catch (error) {
-    console.error('Add participant error:', error);
-    throw error;
-  }
-}
-
-/**
- * Create calendar event in Nextcloud
+ * Create a calendar event in Nextcloud
  * @param {object} event - Event data
  * @param {string} event.summary - Event title
  * @param {Date} event.start - Start time
  * @param {Date} event.end - End time
+ * @param {Array} event.attendees - Array of attendee objects
+ * @param {string} event.talkUrl - Nextcloud Talk URL
  * @param {string} event.description - Event description
- * @param {string} event.location - Event location
- * @param {Array<string>} event.attendees - Attendee email addresses
  * @returns {Promise<object>} Created event data
  */
 async function createCalendarEvent(event) {
-  const {
-    summary,
-    start,
-    end,
-    description = '',
-    location = '',
-    attendees = []
-  } = event;
-  
-  const serverUrl = getServerUrl();
-  const user = getCurrentUser();
-  
-  if (!user) {
-    throw new Error(t('auth.notAuthenticated'));
-  }
-  
-  // Generate unique event ID
-  const eventId = generateEventId();
-  
-  // Build CalDAV URL
-  const calendarName = CONFIG.nextcloud.defaultCalendar;
-  const url = new URL(
-    `${CONFIG.nextcloud.endpoints.calendarBase}/${user.id}/${calendarName}/${eventId}.ics`,
-    serverUrl
-  );
-  
-  // Build iCalendar data
-  const icalData = buildICalendarData({
-    uid: eventId,
-    summary,
-    start,
-    end,
-    description,
-    location,
-    attendees
-  });
-  
   try {
-    const response = await fetchWithAuth(url.toString(), {
+    const serverUrl = getServerUrl();
+    if (!serverUrl) {
+      throw new Error('Nextcloud server URL not configured');
+    }
+    
+    const headers = await getAuthHeaders();
+    headers['Content-Type'] = 'text/calendar';
+    
+    // Get user profile for calendar path
+    const profile = getUserProfile();
+    if (!profile || !profile.id) {
+      throw new Error('User profile not available');
+    }
+    
+    const username = profile.id;
+    const calendar = CONFIG.nextcloud.defaultCalendar;
+    const eventUid = generateUid();
+    
+    // Build iCalendar format
+    const icsContent = buildICalendar(event, eventUid);
+    
+    const calendarUrl = `${serverUrl}${CONFIG.nextcloud.endpoints.calendarBase}/${username}/${calendar}/${eventUid}.ics`;
+    
+    const response = await fetch(calendarUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'text/calendar; charset=utf-8'
-      },
-      body: icalData
+      headers: headers,
+      body: icsContent
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to create calendar event: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Create calendar event error:', errorText);
+      throw new Error('Failed to create calendar event');
     }
     
-    return { eventId, url: url.toString() };
+    return {
+      uid: eventUid,
+      url: calendarUrl
+    };
   } catch (error) {
-    console.error('Create calendar event error:', error);
-    throw new Error(t('calendar.failed'));
-  }
-}
-
-/**
- * Build iCalendar data
- * @param {object} event - Event data
- * @returns {string} iCalendar formatted string
- */
-function buildICalendarData(event) {
-  const { uid, summary, start, end, description, location, attendees } = event;
-  
-  const formatDate = (date) => {
-    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  };
-  
-  let ical = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Nextcloud Talk for Outlook//EN',
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${formatDate(new Date())}`,
-    `DTSTART:${formatDate(start)}`,
-    `DTEND:${formatDate(end)}`,
-    `SUMMARY:${summary}`,
-    `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
-    `LOCATION:${location}`
-  ];
-  
-  // Add attendees
-  attendees.forEach(email => {
-    ical.push(`ATTENDEE;CN=${email};RSVP=TRUE:mailto:${email}`);
-  });
-  
-  ical.push('END:VEVENT');
-  ical.push('END:VCALENDAR');
-  
-  return ical.join('\r\n');
-}
-
-/**
- * Generate unique event ID
- * @returns {string} Event ID
- */
-function generateEventId() {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
-/**
- * Fetch with authentication
- * Automatically handles token refresh if needed
- * @param {string} url - Request URL
- * @param {object} options - Fetch options
- * @returns {Promise<Response>} Fetch response
- */
-async function fetchWithAuth(url, options = {}) {
-  let accessToken = getAccessToken();
-  
-  if (!accessToken) {
-    throw new Error(t('auth.notAuthenticated'));
-  }
-  
-  // Add authorization header
-  options.headers = options.headers || {};
-  options.headers['Authorization'] = `Bearer ${accessToken}`;
-  
-  // Set timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CONFIG.timeouts.api);
-  options.signal = controller.signal;
-  
-  try {
-    const response = await fetch(url, options);
-    clearTimeout(timeoutId);
-    
-    // If unauthorized, try to refresh token
-    if (response.status === 401) {
-      try {
-        await refreshAccessToken();
-        accessToken = getAccessToken();
-        options.headers['Authorization'] = `Bearer ${accessToken}`;
-        
-        // Retry request with new token
-        return await fetch(url, options);
-      } catch (refreshError) {
-        // Refresh failed, need to login again
-        throw new Error(t('auth.notAuthenticated'));
-      }
-    }
-    
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if (error.name === 'AbortError') {
-      throw new Error(t('error.network'));
-    }
-    
+    console.error('createCalendarEvent error:', error);
     throw error;
   }
 }
 
 /**
- * Get Talk room URL
- * @param {string} token - Room token
- * @returns {string} Room URL
+ * Build iCalendar (ICS) format string
+ * @param {object} event - Event data
+ * @param {string} uid - Event UID
+ * @returns {string} ICS format string
  */
-function getTalkRoomUrl(token) {
-  const serverUrl = getServerUrl();
-  return `${serverUrl}/call/${token}`;
+function buildICalendar(event, uid) {
+  const now = new Date();
+  const dtstamp = formatICalDate(now);
+  const dtstart = formatICalDate(event.start);
+  const dtend = formatICalDate(event.end);
+  
+  let ics = 'BEGIN:VCALENDAR\r\n';
+  ics += 'VERSION:2.0\r\n';
+  ics += 'PRODID:-//Nextcloud Talk Outlook Add-in//EN\r\n';
+  ics += 'BEGIN:VEVENT\r\n';
+  ics += `UID:${uid}\r\n`;
+  ics += `DTSTAMP:${dtstamp}\r\n`;
+  ics += `DTSTART:${dtstart}\r\n`;
+  ics += `DTEND:${dtend}\r\n`;
+  ics += `SUMMARY:${escapeICalText(event.summary)}\r\n`;
+  
+  if (event.description) {
+    ics += `DESCRIPTION:${escapeICalText(event.description)}\r\n`;
+  }
+  
+  if (event.talkUrl) {
+    ics += `LOCATION:${escapeICalText(event.talkUrl)}\r\n`;
+    ics += `X-NC-TALK-URL:${event.talkUrl}\r\n`;
+  }
+  
+  // Add attendees
+  if (event.attendees && event.attendees.length > 0) {
+    event.attendees.forEach(attendee => {
+      ics += `ATTENDEE;CN=${escapeICalText(attendee.name || attendee.email)}`;
+      ics += `;RSVP=TRUE:mailto:${attendee.email}\r\n`;
+      
+      // Add custom properties for security settings
+      if (attendee.authLevel && attendee.authLevel !== 'none') {
+        ics += `X-NC-ATTENDEE-AUTH-${attendee.email}:${attendee.authLevel}\r\n`;
+      }
+      
+      if (attendee.secureEmail) {
+        ics += `X-NC-ATTENDEE-SECURE-EMAIL-${attendee.email}:true\r\n`;
+      }
+      
+      if (attendee.personnummer) {
+        ics += `X-NC-ATTENDEE-PERSONNUMMER-${attendee.email}:${attendee.personnummer}\r\n`;
+      }
+      
+      if (attendee.smsNumber) {
+        ics += `X-NC-ATTENDEE-SMS-${attendee.email}:${attendee.smsNumber}\r\n`;
+      }
+      
+      if (attendee.notification) {
+        ics += `X-NC-ATTENDEE-NOTIFICATION-${attendee.email}:${attendee.notification}\r\n`;
+      }
+    });
+  }
+  
+  ics += 'END:VEVENT\r\n';
+  ics += 'END:VCALENDAR\r\n';
+  
+  return ics;
+}
+
+/**
+ * Format date to iCalendar format (YYYYMMDDTHHMMSSZ)
+ * @param {Date} date - Date object
+ * @returns {string} Formatted date string
+ */
+function formatICalDate(date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
+/**
+ * Escape text for iCalendar format
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeICalText(text) {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+/**
+ * Generate unique ID for calendar event
+ * @returns {string} Unique ID
+ */
+function generateUid() {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 15);
+  return `${timestamp}-${random}@outlook-nextcloud-addin`;
+}
+
+/**
+ * Test Nextcloud server connection
+ * @param {string} serverUrl - Server URL to test
+ * @returns {Promise<boolean>} True if connection successful
+ */
+async function testConnection(serverUrl) {
+  try {
+    const response = await fetch(`${serverUrl}/status.php`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    return data.installed === true;
+  } catch (error) {
+    console.error('Connection test error:', error);
+    return false;
+  }
+}
+
+/**
+ * Get Nextcloud server capabilities
+ * @returns {Promise<object>} Server capabilities
+ */
+async function getServerCapabilities() {
+  try {
+    const serverUrl = getServerUrl();
+    if (!serverUrl) {
+      throw new Error('Nextcloud server URL not configured');
+    }
+    
+    const headers = await getAuthHeaders();
+    
+    const response = await fetch(
+      `${serverUrl}/ocs/v2.php/cloud/capabilities?format=json`,
+      {
+        method: 'GET',
+        headers: headers
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to get server capabilities');
+    }
+    
+    const data = await response.json();
+    return data.ocs.data.capabilities;
+  } catch (error) {
+    console.error('getServerCapabilities error:', error);
+    throw error;
+  }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     createTalkRoom,
-    addParticipant,
     createCalendarEvent,
-    getTalkRoomUrl
+    testConnection,
+    getServerCapabilities
   };
 }
 

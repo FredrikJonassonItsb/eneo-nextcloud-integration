@@ -1,345 +1,331 @@
 /**
- * Outlook Service
- * Wrapper for Outlook JavaScript API
+ * Outlook service
+ * Handles interaction with Outlook appointment items
  */
 
 /**
  * Get current appointment item
- * @returns {Promise<Office.Types.ItemCompose|Office.Types.ItemRead>} Current item
+ * @returns {Office.AppointmentCompose} Current appointment
  */
-async function getCurrentItem() {
+function getCurrentAppointment() {
+  if (!Office.context || !Office.context.mailbox || !Office.context.mailbox.item) {
+    throw new Error('No appointment item available');
+  }
+  return Office.context.mailbox.item;
+}
+
+/**
+ * Get meeting data from current appointment
+ * @returns {Promise<object>} Meeting data
+ */
+async function getMeetingData() {
+  const item = getCurrentAppointment();
+  
   return new Promise((resolve, reject) => {
-    if (typeof Office === 'undefined' || !Office.context || !Office.context.mailbox) {
-      reject(new Error('Office context not available'));
-      return;
+    // Get all properties in parallel
+    Promise.all([
+      getProperty(item, 'subject'),
+      getProperty(item, 'start'),
+      getProperty(item, 'end'),
+      getProperty(item, 'location'),
+      getProperty(item, 'body'),
+      getProperty(item, 'requiredAttendees'),
+      getProperty(item, 'optionalAttendees')
+    ])
+    .then(([subject, start, end, location, body, required, optional]) => {
+      const attendees = [
+        ...(required || []),
+        ...(optional || [])
+      ].map(att => ({
+        email: att.emailAddress,
+        name: att.displayName,
+        type: att.recipientType
+      }));
+      
+      resolve({
+        subject: subject || 'Meeting',
+        start: start,
+        end: end,
+        location: location || '',
+        body: body || '',
+        attendees: attendees
+      });
+    })
+    .catch(reject);
+  });
+}
+
+/**
+ * Get property from appointment item
+ * @param {Office.AppointmentCompose} item - Appointment item
+ * @param {string} property - Property name
+ * @returns {Promise<any>} Property value
+ */
+function getProperty(item, property) {
+  return new Promise((resolve, reject) => {
+    if (property === 'body') {
+      item.body.getAsync(Office.CoercionType.Text, (result) => {
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+          resolve(result.value);
+        } else {
+          reject(result.error);
+        }
+      });
+    } else {
+      item[property].getAsync((result) => {
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+          resolve(result.value);
+        } else {
+          reject(result.error);
+        }
+      });
     }
-    
-    const item = Office.context.mailbox.item;
-    if (!item) {
-      reject(new Error(t('message.noMeetingSelected')));
-      return;
+  });
+}
+
+/**
+ * Set property on appointment item
+ * @param {Office.AppointmentCompose} item - Appointment item
+ * @param {string} property - Property name
+ * @param {any} value - Property value
+ * @returns {Promise<void>}
+ */
+function setProperty(item, property, value) {
+  return new Promise((resolve, reject) => {
+    if (property === 'body') {
+      item.body.setAsync(value, { coercionType: Office.CoercionType.Text }, (result) => {
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+          resolve();
+        } else {
+          reject(result.error);
+        }
+      });
+    } else {
+      item[property].setAsync(value, (result) => {
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+          resolve();
+        } else {
+          reject(result.error);
+        }
+      });
     }
+  });
+}
+
+/**
+ * Add Nextcloud Talk meeting to appointment
+ * @param {string} talkUrl - Nextcloud Talk meeting URL
+ * @param {string} roomName - Room name
+ * @returns {Promise<void>}
+ */
+async function addTalkMeetingToAppointment(talkUrl, roomName) {
+  try {
+    const item = getCurrentAppointment();
     
-    resolve(item);
-  });
+    // Get current body
+    const currentBody = await getProperty(item, 'body');
+    
+    // Remove Teams meeting information if present
+    const cleanedBody = removeTeamsMeetingInfo(currentBody);
+    
+    // Build new body with Talk meeting info
+    const meetingText = buildMeetingText(talkUrl, roomName);
+    const newBody = cleanedBody ? `${cleanedBody}\n\n${meetingText}` : meetingText;
+    
+    // Update body
+    await setProperty(item, 'body', newBody);
+    
+    // Update location
+    const locationText = t('meeting.location');
+    await setProperty(item, 'location', locationText);
+    
+  } catch (error) {
+    console.error('addTalkMeetingToAppointment error:', error);
+    throw error;
+  }
 }
 
 /**
- * Get appointment subject
- * @returns {Promise<string>} Appointment subject
+ * Remove Teams meeting information from body text
+ * @param {string} body - Original body text
+ * @returns {string} Cleaned body text
  */
-async function getSubject() {
-  const item = await getCurrentItem();
+function removeTeamsMeetingInfo(body) {
+  if (!body) return '';
   
-  return new Promise((resolve, reject) => {
-    item.subject.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get subject'));
-      }
-    });
-  });
-}
-
-/**
- * Get appointment start time
- * @returns {Promise<Date>} Start time
- */
-async function getStartTime() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.start.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get start time'));
-      }
-    });
-  });
-}
-
-/**
- * Get appointment end time
- * @returns {Promise<Date>} End time
- */
-async function getEndTime() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.end.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get end time'));
-      }
-    });
-  });
-}
-
-/**
- * Get appointment body
- * @returns {Promise<string>} Body content
- */
-async function getBody() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.body.getAsync(Office.CoercionType.Text, (result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get body'));
-      }
-    });
-  });
-}
-
-/**
- * Set appointment body
- * @param {string} content - Body content
- * @param {string} coercionType - Content type (Text or Html)
- */
-async function setBody(content, coercionType = Office.CoercionType.Html) {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.body.setAsync(content, { coercionType }, (result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve();
-      } else {
-        reject(new Error('Failed to set body'));
-      }
-    });
-  });
-}
-
-/**
- * Prepend content to appointment body
- * @param {string} content - Content to prepend
- * @param {string} coercionType - Content type (Text or Html)
- */
-async function prependToBody(content, coercionType = Office.CoercionType.Html) {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.body.prependAsync(content, { coercionType }, (result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve();
-      } else {
-        reject(new Error('Failed to prepend to body'));
-      }
-    });
-  });
-}
-
-/**
- * Get appointment location
- * @returns {Promise<string>} Location
- */
-async function getLocation() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.location.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get location'));
-      }
-    });
-  });
-}
-
-/**
- * Set appointment location
- * @param {string} location - Location string
- */
-async function setLocation(location) {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.location.setAsync(location, (result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve();
-      } else {
-        reject(new Error('Failed to set location'));
-      }
-    });
-  });
-}
-
-/**
- * Get required attendees
- * @returns {Promise<Array<object>>} Array of attendees
- */
-async function getRequiredAttendees() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.requiredAttendees.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get attendees'));
-      }
-    });
-  });
-}
-
-/**
- * Get optional attendees
- * @returns {Promise<Array<object>>} Array of attendees
- */
-async function getOptionalAttendees() {
-  const item = await getCurrentItem();
-  
-  return new Promise((resolve, reject) => {
-    item.optionalAttendees.getAsync((result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        resolve(result.value);
-      } else {
-        reject(new Error('Failed to get optional attendees'));
-      }
-    });
-  });
-}
-
-/**
- * Get all attendees (required + optional)
- * @returns {Promise<Array<object>>} Array of all attendees
- */
-async function getAllAttendees() {
-  const required = await getRequiredAttendees();
-  const optional = await getOptionalAttendees();
-  return [...required, ...optional];
-}
-
-/**
- * Remove Teams link from body
- * Detects and removes Microsoft Teams meeting links
- */
-async function removeTeamsLink() {
-  const body = await getBody();
-  
-  // Patterns to detect Teams links
+  // Patterns to match Teams meeting information
   const teamsPatterns = [
-    /Join\s+Microsoft\s+Teams\s+Meeting[^\n]*/gi,
-    /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s]*/gi,
-    /https:\/\/teams\.live\.com\/meet\/[^\s]*/gi,
-    /Conference\s+ID:[^\n]*/gi,
-    /Dial-in\s+Numbers[^\n]*/gi,
-    /<https:\/\/aka\.ms\/JoinTeamsMeeting>[^\n]*/gi
+    /Microsoft Teams Meeting[\s\S]*?________________________________________________________________________________/gi,
+    /Join Microsoft Teams Meeting[\s\S]*?Learn more \| Meeting options/gi,
+    /Click here to join the meeting[\s\S]*?Learn More \| Meeting options/gi,
+    /________________________________________________________________________________/g,
+    /<https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^>]+>/g,
+    /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s]+/g,
+    /Conference ID:.*?\n/g,
+    /Dial-in Numbers.*?\n/g
   ];
   
-  let cleanedBody = body;
+  let cleaned = body;
   teamsPatterns.forEach(pattern => {
-    cleanedBody = cleanedBody.replace(pattern, '');
+    cleaned = cleaned.replace(pattern, '');
   });
   
-  // Remove excessive newlines
-  cleanedBody = cleanedBody.replace(/\n{3,}/g, '\n\n');
+  // Clean up extra whitespace
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
   
-  if (cleanedBody !== body) {
-    await setBody(cleanedBody, Office.CoercionType.Text);
-    return true;
-  }
-  
-  return false;
+  return cleaned;
 }
 
 /**
- * Add Nextcloud Talk meeting link to appointment
- * @param {string} roomUrl - Talk room URL
- * @param {Date} startTime - Meeting start time
+ * Build meeting text for appointment body
+ * @param {string} talkUrl - Nextcloud Talk URL
+ * @param {string} roomName - Room name
+ * @returns {string} Formatted meeting text
  */
-async function addTalkMeetingLink(roomUrl, startTime) {
-  // Remove Teams link if configured
-  if (CONFIG.features.removeTeamsLinks) {
-    try {
-      await removeTeamsLink();
-    } catch (error) {
-      console.warn('Failed to remove Teams link:', error);
-    }
-  }
+function buildMeetingText(talkUrl, roomName) {
+  const prefix = t('meeting.bodyPrefix');
+  const instructions = t('meeting.bodyInstructions');
   
-  // Format meeting link message
-  const message = t('message.meetingLinkTemplate', {
-    link: roomUrl,
-    startTime: startTime.toLocaleString(getCurrentLocale())
-  });
+  let text = '________________________________________________________________________________\n\n';
+  text += `${roomName}\n\n`;
+  text += `${prefix}\n`;
+  text += `${talkUrl}\n\n`;
+  text += `${instructions}\n`;
+  text += '________________________________________________________________________________';
   
-  // Prepend to body
-  await prependToBody(`\n\n${message}\n\n`, Office.CoercionType.Text);
-  
-  // Set location if configured
-  if (CONFIG.features.autoAddMeetingLink) {
-    const currentLocation = await getLocation();
-    if (!currentLocation || currentLocation.trim() === '') {
-      await setLocation(t('message.meetingLocation'));
-    }
+  return text;
+}
+
+/**
+ * Check if appointment has Teams meeting
+ * @returns {Promise<boolean>} True if Teams meeting exists
+ */
+async function hasTeamsMeeting() {
+  try {
+    const item = getCurrentAppointment();
+    const body = await getProperty(item, 'body');
+    
+    return body && (
+      body.includes('teams.microsoft.com') ||
+      body.includes('Microsoft Teams Meeting') ||
+      body.includes('Join Microsoft Teams Meeting')
+    );
+  } catch (error) {
+    console.error('hasTeamsMeeting error:', error);
+    return false;
   }
 }
 
 /**
- * Show notification
+ * Validate appointment for Talk meeting creation
+ * @returns {Promise<object>} Validation result
+ */
+async function validateAppointment() {
+  try {
+    const data = await getMeetingData();
+    
+    const errors = [];
+    
+    if (!data.subject || data.subject.trim() === '') {
+      errors.push('Meeting subject is required');
+    }
+    
+    if (!data.start) {
+      errors.push('Meeting start time is required');
+    }
+    
+    if (!data.end) {
+      errors.push('Meeting end time is required');
+    }
+    
+    if (data.start && data.end && data.start >= data.end) {
+      errors.push('Meeting end time must be after start time');
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors: errors,
+      data: data
+    };
+  } catch (error) {
+    console.error('validateAppointment error:', error);
+    return {
+      valid: false,
+      errors: ['Failed to validate appointment'],
+      data: null
+    };
+  }
+}
+
+/**
+ * Show notification to user
  * @param {string} message - Notification message
- * @param {string} type - Notification type (informationalMessage, errorMessage, warningMessage)
+ * @param {string} type - Notification type (info, error, success)
  */
-function showNotification(message, type = 'informationalMessage') {
-  if (typeof Office === 'undefined' || !Office.context || !Office.context.mailbox) {
-    console.log('Notification:', message);
-    return;
+function showNotification(message, type = 'info') {
+  if (Office.context.mailbox && Office.context.mailbox.item) {
+    const notificationMessages = Office.context.mailbox.item.notificationMessages;
+    
+    const key = `notification_${Date.now()}`;
+    const icon = type === 'error' ? 'Icon.80x80' : 'Icon.80x80';
+    
+    notificationMessages.addAsync(key, {
+      type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
+      message: message,
+      icon: icon,
+      persistent: false
+    });
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      notificationMessages.removeAsync(key);
+    }, 5000);
   }
-  
-  const notification = {
-    type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-    message: message,
-    icon: 'icon-16',
-    persistent: false
-  };
-  
-  if (type === 'errorMessage') {
-    notification.type = Office.MailboxEnums.ItemNotificationMessageType.ErrorMessage;
-    notification.persistent = true;
-  } else if (type === 'warningMessage') {
-    notification.type = Office.MailboxEnums.ItemNotificationMessageType.ProgressIndicator;
-  }
-  
-  Office.context.mailbox.item.notificationMessages.addAsync('nextcloud-talk', notification);
 }
 
 /**
- * Remove notification
+ * Show progress indicator
+ * @param {string} message - Progress message
+ * @returns {string} Progress key for removal
  */
-function removeNotification() {
-  if (typeof Office === 'undefined' || !Office.context || !Office.context.mailbox) {
-    return;
+function showProgress(message) {
+  if (Office.context.mailbox && Office.context.mailbox.item) {
+    const notificationMessages = Office.context.mailbox.item.notificationMessages;
+    const key = `progress_${Date.now()}`;
+    
+    notificationMessages.addAsync(key, {
+      type: Office.MailboxEnums.ItemNotificationMessageType.ProgressIndicator,
+      message: message
+    });
+    
+    return key;
   }
-  
-  Office.context.mailbox.item.notificationMessages.removeAsync('nextcloud-talk');
+  return null;
+}
+
+/**
+ * Hide progress indicator
+ * @param {string} key - Progress key
+ */
+function hideProgress(key) {
+  if (key && Office.context.mailbox && Office.context.mailbox.item) {
+    const notificationMessages = Office.context.mailbox.item.notificationMessages;
+    notificationMessages.removeAsync(key);
+  }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    getCurrentItem,
-    getSubject,
-    getStartTime,
-    getEndTime,
-    getBody,
-    setBody,
-    prependToBody,
-    getLocation,
-    setLocation,
-    getRequiredAttendees,
-    getOptionalAttendees,
-    getAllAttendees,
-    removeTeamsLink,
-    addTalkMeetingLink,
+    getCurrentAppointment,
+    getMeetingData,
+    addTalkMeetingToAppointment,
+    removeTeamsMeetingInfo,
+    hasTeamsMeeting,
+    validateAppointment,
     showNotification,
-    removeNotification
+    showProgress,
+    hideProgress
   };
 }
 

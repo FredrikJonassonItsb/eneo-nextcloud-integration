@@ -1,204 +1,182 @@
 /**
- * Internationalization (i18n) module
- * Provides multi-language support for the add-in
+ * Internationalization (i18n) utility
+ * Supports Swedish (sv-SE) and English (en-US)
  */
 
 const translations = {
-  'sv-SE': {
-    // General
-    'app.name': 'Nextcloud Talk Integration för Outlook',
-    'app.version': 'v2.0.0',
-    'app.buildDate': '2025-10-25 10:50',
-    'app.loading': 'Laddar...',
-    'app.error': 'Ett fel uppstod',
-    
-    // Authentication
-    'auth.login': 'Logga in',
-    'auth.logout': 'Logga ut',
-    'auth.loginPrompt': 'Logga in på Nextcloud för att fortsätta',
-    'auth.loginButton': 'Logga in med Nextcloud',
-    'auth.loggingIn': 'Loggar in...',
-    'auth.loginSuccess': 'Inloggning lyckades!',
-    'auth.loginFailed': 'Inloggning misslyckades',
-    'auth.notAuthenticated': 'Du är inte inloggad',
-    
-    // Meeting creation
-    'meeting.create': 'Skapa Nextcloud Talk-möte',
-    'meeting.creating': 'Skapar möte...',
-    'meeting.created': 'Möte skapat!',
-    'meeting.failed': 'Kunde inte skapa möte',
-    'meeting.addLink': 'Lägg till Nextcloud Talk-möte',
-    'meeting.linkAdded': 'Möteslänk tillagd',
-    'meeting.roomName': 'Mötesnamn',
-    'meeting.roomNamePlaceholder': 'Ange mötesnamn',
-    
-    // Meeting settings
-    'settings.title': 'Mötesinställningar',
-    'settings.allowGuests': 'Tillåt gäster',
-    'settings.password': 'Lösenord',
-    'settings.passwordPlaceholder': 'Valfritt lösenord',
-    'settings.notifications': 'Notifieringar',
-    
-    // Participants
-    'participants.title': 'Deltagare',
-    'participants.add': 'Lägg till deltagare',
-    'participants.remove': 'Ta bort',
-    'participants.authLevel': 'Autentiseringsnivå',
-    'participants.authNone': 'Ingen',
-    'participants.authSMS': 'SMS',
-    'participants.authLOA3': 'LOA-3 (BankID)',
-    'participants.notification': 'Notifiering',
-    'participants.notificationEmail': 'E-post',
-    'participants.notificationSMS': 'SMS',
-    'participants.notificationBoth': 'E-post + SMS',
-    'participants.personalNumber': 'Personnummer',
-    'participants.phoneNumber': 'Telefonnummer',
-    'participants.secureEmail': 'Säker e-post',
-    
-    // Calendar
-    'calendar.creating': 'Skapar kalenderhändelse...',
-    'calendar.created': 'Kalenderhändelse skapad',
-    'calendar.failed': 'Kunde inte skapa kalenderhändelse',
-    
-    // Teams integration
-    'teams.removing': 'Tar bort Teams-länk...',
-    'teams.removed': 'Teams-länk borttagen',
-    
-    // Errors
-    'error.network': 'Nätverksfel - kontrollera din anslutning',
-    'error.server': 'Serverfel - försök igen senare',
-    'error.auth': 'Autentiseringsfel - logga in igen',
-    'error.permission': 'Behörighet saknas',
-    'error.notFound': 'Hittades inte',
-    'error.unknown': 'Ett okänt fel uppstod',
-    
-    // Buttons
-    'button.ok': 'OK',
-    'button.cancel': 'Avbryt',
-    'button.save': 'Spara',
-    'button.close': 'Stäng',
-    'button.retry': 'Försök igen',
-    
-    // Messages
-    'message.meetingLinkTemplate': 'Delta i mötet via Nextcloud Talk:\n{link}\n\nMötet startar: {startTime}',
-    'message.meetingLocation': 'Nextcloud Talk (online)',
-    'message.noMeetingSelected': 'Inget möte valt',
-    'message.selectMeeting': 'Välj ett möte för att lägga till Nextcloud Talk'
-  },
-  
   'en-US': {
-    // General
-    'app.name': 'Nextcloud Talk for Outlook',
-    'app.loading': 'Loading...',
-    'app.error': 'An error occurred',
-    
-    // Authentication
-    'auth.login': 'Log in',
-    'auth.logout': 'Log out',
-    'auth.loginPrompt': 'Log in to Nextcloud to continue',
-    'auth.loginButton': 'Log in with Nextcloud',
-    'auth.loggingIn': 'Logging in...',
-    'auth.loginSuccess': 'Login successful!',
-    'auth.loginFailed': 'Login failed',
-    'auth.notAuthenticated': 'You are not logged in',
-    
-    // Meeting creation
-    'meeting.create': 'Create Nextcloud Talk meeting',
-    'meeting.creating': 'Creating meeting...',
-    'meeting.created': 'Meeting created!',
-    'meeting.failed': 'Could not create meeting',
-    'meeting.addLink': 'Add Nextcloud Talk meeting',
-    'meeting.linkAdded': 'Meeting link added',
-    'meeting.roomName': 'Meeting name',
-    'meeting.roomNamePlaceholder': 'Enter meeting name',
-    
-    // Meeting settings
-    'settings.title': 'Meeting settings',
-    'settings.allowGuests': 'Allow guests',
-    'settings.password': 'Password',
-    'settings.passwordPlaceholder': 'Optional password',
-    'settings.notifications': 'Notifications',
-    
-    // Participants
-    'participants.title': 'Participants',
-    'participants.add': 'Add participant',
-    'participants.remove': 'Remove',
-    'participants.authLevel': 'Authentication level',
-    'participants.authNone': 'None',
-    'participants.authSMS': 'SMS',
-    'participants.authLOA3': 'LOA-3 (BankID)',
-    'participants.notification': 'Notification',
-    'participants.notificationEmail': 'Email',
-    'participants.notificationSMS': 'SMS',
-    'participants.notificationBoth': 'Email + SMS',
-    'participants.personalNumber': 'Personal number',
-    'participants.phoneNumber': 'Phone number',
-    'participants.secureEmail': 'Secure email',
-    
-    // Calendar
-    'calendar.creating': 'Creating calendar event...',
-    'calendar.created': 'Calendar event created',
-    'calendar.failed': 'Could not create calendar event',
-    
-    // Teams integration
-    'teams.removing': 'Removing Teams link...',
-    'teams.removed': 'Teams link removed',
-    
-    // Errors
-    'error.network': 'Network error - check your connection',
-    'error.server': 'Server error - try again later',
-    'error.auth': 'Authentication error - log in again',
-    'error.permission': 'Permission denied',
-    'error.notFound': 'Not found',
-    'error.unknown': 'An unknown error occurred',
-    
     // Buttons
-    'button.ok': 'OK',
+    'button.addMeeting': 'Add Nextcloud Talk Meeting',
     'button.cancel': 'Cancel',
     'button.save': 'Save',
+    'button.login': 'Login',
+    'button.logout': 'Logout',
+    'button.configure': 'Configure',
     'button.close': 'Close',
-    'button.retry': 'Retry',
     
-    // Messages
-    'message.meetingLinkTemplate': 'Join the meeting via Nextcloud Talk:\n{link}\n\nMeeting starts: {startTime}',
-    'message.meetingLocation': 'Nextcloud Talk (online)',
-    'message.noMeetingSelected': 'No meeting selected',
-    'message.selectMeeting': 'Select a meeting to add Nextcloud Talk'
+    // Status messages
+    'status.creating': 'Creating Talk room...',
+    'status.creatingCalendar': 'Creating calendar event...',
+    'status.success': 'Nextcloud Talk meeting added successfully',
+    'status.authenticating': 'Authenticating...',
+    'status.loading': 'Loading...',
+    
+    // Labels
+    'label.serverUrl': 'Nextcloud Server URL',
+    'label.meetingTitle': 'Meeting Title',
+    'label.startTime': 'Start Time',
+    'label.endTime': 'End Time',
+    'label.attendees': 'Attendees',
+    'label.location': 'Location',
+    'label.attendeeSettings': 'Attendee Security Settings',
+    'label.authLevel': 'Authentication Level',
+    'label.secureEmail': 'Send as Secure Email',
+    'label.personnummer': 'Personal Number (Personnummer)',
+    'label.smsNumber': 'SMS Number',
+    'label.notification': 'Notification Method',
+    
+    // Authentication levels
+    'auth.none': 'None',
+    'auth.sms': 'SMS',
+    'auth.loa3': 'LOA-3 (BankID)',
+    
+    // Notification methods
+    'notification.email': 'Email',
+    'notification.emailSms': 'Email + SMS',
+    
+    // Errors
+    'error.connection': 'Could not connect to Nextcloud server',
+    'error.authentication': 'Authentication failed. Please login again.',
+    'error.createRoom': 'Failed to create Talk room',
+    'error.createCalendar': 'Failed to create calendar event',
+    'error.invalidServer': 'Invalid Nextcloud server URL',
+    'error.missingData': 'Missing required meeting data',
+    'error.network': 'Network error. Please check your connection.',
+    'error.timeout': 'Request timed out. Please try again.',
+    'error.unknown': 'An unknown error occurred',
+    
+    // Instructions
+    'instruction.login': 'Please login to your Nextcloud account to continue',
+    'instruction.configure': 'Configure your Nextcloud server URL in settings',
+    'instruction.attendeeSettings': 'Configure security settings for each attendee (optional)',
+    'instruction.joinMeeting': 'Join the meeting via Nextcloud Talk',
+    
+    // Meeting text
+    'meeting.location': 'Nextcloud Talk (online)',
+    'meeting.bodyPrefix': 'Join the meeting via Nextcloud Talk:',
+    'meeting.bodyInstructions': 'Click the link above to join the video meeting.',
+    
+    // Settings
+    'settings.title': 'Nextcloud Talk Settings',
+    'settings.serverUrl': 'Server URL',
+    'settings.save': 'Save Settings',
+    'settings.saved': 'Settings saved successfully'
+  },
+  
+  'sv-SE': {
+    // Buttons
+    'button.addMeeting': 'Lägg till Nextcloud Talk-möte',
+    'button.cancel': 'Avbryt',
+    'button.save': 'Spara',
+    'button.login': 'Logga in',
+    'button.logout': 'Logga ut',
+    'button.configure': 'Konfigurera',
+    'button.close': 'Stäng',
+    
+    // Status messages
+    'status.creating': 'Skapar Talk-rum...',
+    'status.creatingCalendar': 'Skapar kalenderhändelse...',
+    'status.success': 'Nextcloud Talk-möte har lagts till',
+    'status.authenticating': 'Autentiserar...',
+    'status.loading': 'Laddar...',
+    
+    // Labels
+    'label.serverUrl': 'Nextcloud Server-URL',
+    'label.meetingTitle': 'Mötestittel',
+    'label.startTime': 'Starttid',
+    'label.endTime': 'Sluttid',
+    'label.attendees': 'Deltagare',
+    'label.location': 'Plats',
+    'label.attendeeSettings': 'Deltagarens säkerhetsinställningar',
+    'label.authLevel': 'Autentiseringsnivå',
+    'label.secureEmail': 'Skicka som säker e-post',
+    'label.personnummer': 'Personnummer',
+    'label.smsNumber': 'SMS-nummer',
+    'label.notification': 'Notifieringsmetod',
+    
+    // Authentication levels
+    'auth.none': 'Ingen',
+    'auth.sms': 'SMS',
+    'auth.loa3': 'LOA-3 (BankID)',
+    
+    // Notification methods
+    'notification.email': 'E-post',
+    'notification.emailSms': 'E-post + SMS',
+    
+    // Errors
+    'error.connection': 'Kunde inte ansluta till Nextcloud-servern',
+    'error.authentication': 'Autentisering misslyckades. Vänligen logga in igen.',
+    'error.createRoom': 'Kunde inte skapa Talk-rum',
+    'error.createCalendar': 'Kunde inte skapa kalenderhändelse',
+    'error.invalidServer': 'Ogiltig Nextcloud server-URL',
+    'error.missingData': 'Saknar nödvändig mötesdata',
+    'error.network': 'Nätverksfel. Kontrollera din anslutning.',
+    'error.timeout': 'Förfrågan tog för lång tid. Försök igen.',
+    'error.unknown': 'Ett okänt fel uppstod',
+    
+    // Instructions
+    'instruction.login': 'Vänligen logga in på ditt Nextcloud-konto för att fortsätta',
+    'instruction.configure': 'Konfigurera din Nextcloud server-URL i inställningarna',
+    'instruction.attendeeSettings': 'Konfigurera säkerhetsinställningar för varje deltagare (valfritt)',
+    'instruction.joinMeeting': 'Delta i mötet via Nextcloud Talk',
+    
+    // Meeting text
+    'meeting.location': 'Nextcloud Talk (online)',
+    'meeting.bodyPrefix': 'Delta i mötet via Nextcloud Talk:',
+    'meeting.bodyInstructions': 'Klicka på länken ovan för att delta i videomötet.',
+    
+    // Settings
+    'settings.title': 'Nextcloud Talk-inställningar',
+    'settings.serverUrl': 'Server-URL',
+    'settings.save': 'Spara inställningar',
+    'settings.saved': 'Inställningar sparade'
   }
 };
 
+// Current locale
+let currentLocale = 'en-US';
+
 /**
- * Get current locale from storage or browser
+ * Initialize i18n with user's locale
  */
-function getCurrentLocale() {
-  // Try to get from storage
-  const stored = localStorage.getItem(CONFIG.storage.locale);
-  if (stored && CONFIG.app.supportedLocales.includes(stored)) {
-    return stored;
+function initI18n() {
+  // Try to get locale from Office context
+  if (typeof Office !== 'undefined' && Office.context && Office.context.displayLanguage) {
+    const officeLocale = Office.context.displayLanguage;
+    if (translations[officeLocale]) {
+      currentLocale = officeLocale;
+    } else if (officeLocale.startsWith('sv')) {
+      currentLocale = 'sv-SE';
+    }
   }
   
-  // Try to get from browser
-  const browserLocale = navigator.language || navigator.userLanguage;
-  if (CONFIG.app.supportedLocales.includes(browserLocale)) {
-    return browserLocale;
+  // Check for saved locale preference
+  const savedLocale = localStorage.getItem('app_locale');
+  if (savedLocale && translations[savedLocale]) {
+    currentLocale = savedLocale;
   }
-  
-  // Fall back to default
-  return CONFIG.app.defaultLocale;
 }
 
 /**
  * Get translated string
  * @param {string} key - Translation key
- * @param {object} params - Parameters to replace in the string
+ * @param {object} params - Optional parameters for string interpolation
  * @returns {string} Translated string
  */
 function t(key, params = {}) {
-  const locale = getCurrentLocale();
-  const translation = translations[locale] || translations[CONFIG.app.defaultLocale];
-  let text = translation[key] || key;
+  let text = translations[currentLocale]?.[key] || translations['en-US'][key] || key;
   
-  // Replace parameters
+  // Simple parameter substitution
   Object.keys(params).forEach(param => {
     text = text.replace(`{${param}}`, params[param]);
   });
@@ -207,17 +185,35 @@ function t(key, params = {}) {
 }
 
 /**
- * Set current locale
- * @param {string} locale - Locale code (e.g., 'sv-SE', 'en-US')
+ * Get current locale
+ * @returns {string} Current locale code
+ */
+function getLocale() {
+  return currentLocale;
+}
+
+/**
+ * Set locale
+ * @param {string} locale - Locale code (e.g., 'en-US', 'sv-SE')
  */
 function setLocale(locale) {
-  if (CONFIG.app.supportedLocales.includes(locale)) {
-    localStorage.setItem(CONFIG.storage.locale, locale);
+  if (translations[locale]) {
+    currentLocale = locale;
+    localStorage.setItem('app_locale', locale);
+  }
+}
+
+// Initialize on load
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initI18n);
+  } else {
+    initI18n();
   }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { t, getCurrentLocale, setLocale };
+  module.exports = { t, getLocale, setLocale, initI18n };
 }
 

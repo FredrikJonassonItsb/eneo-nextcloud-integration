@@ -39,53 +39,53 @@
 <body>
   <div class="container">
     <div class="spinner"></div>
-    <p>Completing authentication...</p>
+    <p id="status">Completing authentication...</p>
   </div>
+  
+  <!-- Office.js for dialog communication -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   
   <script>
     (function() {
       'use strict';
       
+      console.log('Callback page loaded');
+      
       // Parse URL parameters
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
+      const state = params.get('state');
       const error = params.get('error');
       const errorDescription = params.get('error_description');
       
-      // Send message to parent window
-      if (window.opener || window.parent) {
-        if (error) {
-          const message = {
-            error: errorDescription || error
-          };
-          
-          if (Office && Office.context && Office.context.ui) {
-            Office.context.ui.messageParent(JSON.stringify(message));
-          } else if (window.opener) {
-            window.opener.postMessage(message, '*');
-          }
-        } else if (code) {
-          const message = {
-            code: code
-          };
-          
-          if (Office && Office.context && Office.context.ui) {
-            Office.context.ui.messageParent(JSON.stringify(message));
-          } else if (window.opener) {
-            window.opener.postMessage(message, '*');
-          }
-        }
+      console.log('Callback params:', { code: code ? 'present' : 'missing', state, error });
+      
+      if (error) {
+        document.getElementById('status').textContent = 'Authentication failed: ' + (errorDescription || error);
+        sendMessageToParent({ error: errorDescription || error });
+      } else if (code && state) {
+        document.getElementById('status').textContent = 'Authentication successful!';
+        sendMessageToParent({ code: code, state: state });
+      } else {
+        document.getElementById('status').textContent = 'Invalid callback parameters';
+        sendMessageToParent({ error: 'Invalid callback parameters' });
       }
       
-      // Close window after a short delay
-      setTimeout(() => {
-        window.close();
-      }, 1000);
+      function sendMessageToParent(message) {
+        console.log('Sending message to parent:', message);
+        
+        if (typeof Office !== 'undefined' && Office.context && Office.context.ui) {
+          try {
+            Office.context.ui.messageParent(JSON.stringify(message));
+            console.log('Message sent via Office.context.ui.messageParent');
+          } catch (e) {
+            console.error('Failed to send via Office API:', e);
+          }
+        }
+        
+        setTimeout(() => window.close(), 2000);
+      }
     })();
   </script>
-  
-  <!-- Office.js for dialog communication -->
-  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 </body>
 </html>
-

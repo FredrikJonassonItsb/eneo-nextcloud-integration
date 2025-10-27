@@ -1,153 +1,189 @@
 /**
- * Storage utility module
- * Provides secure storage for tokens and user data
+ * Storage utility for secure data persistence
+ * Uses Office.context.roamingSettings for add-in data
  */
 
 /**
- * Save access token
- * @param {string} token - Access token
- * @param {number} expiresIn - Token expiry time in seconds
+ * Initialize storage
  */
-function saveAccessToken(token, expiresIn) {
-  const expiry = Date.now() + (expiresIn * 1000);
-  localStorage.setItem(CONFIG.storage.accessToken, token);
-  localStorage.setItem(CONFIG.storage.tokenExpiry, expiry.toString());
+function initStorage() {
+  return new Promise((resolve, reject) => {
+    if (typeof Office !== 'undefined' && Office.context) {
+      resolve();
+    } else {
+      reject(new Error('Office context not available'));
+    }
+  });
 }
 
 /**
- * Get access token
- * @returns {string|null} Access token or null if not found/expired
+ * Save data to roaming settings
+ * @param {string} key - Storage key
+ * @param {any} value - Value to store
  */
-function getAccessToken() {
-  const token = localStorage.getItem(CONFIG.storage.accessToken);
-  const expiry = localStorage.getItem(CONFIG.storage.tokenExpiry);
+async function setItem(key, value) {
+  try {
+    if (typeof Office !== 'undefined' && Office.context && Office.context.roamingSettings) {
+      Office.context.roamingSettings.set(key, value);
+      await Office.context.roamingSettings.saveAsync();
+    } else {
+      // Fallback to localStorage for testing
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch (error) {
+    console.error('Storage setItem error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get data from roaming settings
+ * @param {string} key - Storage key
+ * @returns {any} Stored value
+ */
+function getItem(key) {
+  try {
+    if (typeof Office !== 'undefined' && Office.context && Office.context.roamingSettings) {
+      return Office.context.roamingSettings.get(key);
+    } else {
+      // Fallback to localStorage for testing
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    }
+  } catch (error) {
+    console.error('Storage getItem error:', error);
+    return null;
+  }
+}
+
+/**
+ * Remove data from roaming settings
+ * @param {string} key - Storage key
+ */
+async function removeItem(key) {
+  try {
+    if (typeof Office !== 'undefined' && Office.context && Office.context.roamingSettings) {
+      Office.context.roamingSettings.remove(key);
+      await Office.context.roamingSettings.saveAsync();
+    } else {
+      // Fallback to localStorage for testing
+      localStorage.removeItem(key);
+    }
+  } catch (error) {
+    console.error('Storage removeItem error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clear all stored data
+ */
+async function clear() {
+  try {
+    if (typeof Office !== 'undefined' && Office.context && Office.context.roamingSettings) {
+      const settings = Office.context.roamingSettings;
+      const keys = Object.keys(settings.get());
+      keys.forEach(key => settings.remove(key));
+      await settings.saveAsync();
+    } else {
+      // Fallback to localStorage for testing
+      localStorage.clear();
+    }
+  } catch (error) {
+    console.error('Storage clear error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Save authentication tokens
+ * @param {object} tokens - Token object with accessToken, refreshToken, expiresIn
+ */
+async function saveTokens(tokens) {
+  const expiryTime = Date.now() + (tokens.expiresIn * 1000);
   
-  if (!token || !expiry) {
+  await setItem('nc_access_token', tokens.accessToken);
+  await setItem('nc_refresh_token', tokens.refreshToken);
+  await setItem('nc_token_expiry', expiryTime);
+}
+
+/**
+ * Get authentication tokens
+ * @returns {object|null} Token object or null if not found
+ */
+function getTokens() {
+  const accessToken = getItem('nc_access_token');
+  const refreshToken = getItem('nc_refresh_token');
+  const expiry = getItem('nc_token_expiry');
+  
+  if (!accessToken) {
     return null;
   }
   
-  // Check if token is expired
-  if (Date.now() >= parseInt(expiry)) {
-    clearAccessToken();
-    return null;
-  }
-  
-  return token;
+  return {
+    accessToken,
+    refreshToken,
+    expiry,
+    isExpired: expiry ? Date.now() > expiry : true
+  };
 }
 
 /**
- * Clear access token
+ * Clear authentication tokens
  */
-function clearAccessToken() {
-  localStorage.removeItem(CONFIG.storage.accessToken);
-  localStorage.removeItem(CONFIG.storage.tokenExpiry);
-}
-
-/**
- * Save refresh token
- * @param {string} token - Refresh token
- */
-function saveRefreshToken(token) {
-  localStorage.setItem(CONFIG.storage.refreshToken, token);
-}
-
-/**
- * Get refresh token
- * @returns {string|null} Refresh token or null if not found
- */
-function getRefreshToken() {
-  return localStorage.getItem(CONFIG.storage.refreshToken);
-}
-
-/**
- * Clear refresh token
- */
-function clearRefreshToken() {
-  localStorage.removeItem(CONFIG.storage.refreshToken);
+async function clearTokens() {
+  await removeItem('nc_access_token');
+  await removeItem('nc_refresh_token');
+  await removeItem('nc_token_expiry');
 }
 
 /**
  * Save user profile
  * @param {object} profile - User profile data
  */
-function saveUserProfile(profile) {
-  localStorage.setItem(CONFIG.storage.userProfile, JSON.stringify(profile));
+async function saveUserProfile(profile) {
+  await setItem('nc_user_profile', profile);
 }
 
 /**
  * Get user profile
- * @returns {object|null} User profile or null if not found
+ * @returns {object|null} User profile or null
  */
 function getUserProfile() {
-  const profile = localStorage.getItem(CONFIG.storage.userProfile);
-  return profile ? JSON.parse(profile) : null;
+  return getItem('nc_user_profile');
 }
 
 /**
- * Clear user profile
+ * Save Nextcloud server URL
+ * @param {string} url - Server URL
  */
-function clearUserProfile() {
-  localStorage.removeItem(CONFIG.storage.userProfile);
+async function saveServerUrl(url) {
+  await setItem('nc_server_url', url);
 }
 
 /**
- * Save server URL
- * @param {string} url - Nextcloud server URL
- */
-function saveServerUrl(url) {
-  localStorage.setItem(CONFIG.storage.serverUrl, url);
-}
-
-/**
- * Get server URL
- * @returns {string} Server URL (from storage or config)
+ * Get Nextcloud server URL
+ * @returns {string|null} Server URL or null
  */
 function getServerUrl() {
-  return localStorage.getItem(CONFIG.storage.serverUrl) || CONFIG.nextcloud.serverUrl;
-}
-
-/**
- * Clear server URL
- */
-function clearServerUrl() {
-  localStorage.removeItem(CONFIG.storage.serverUrl);
-}
-
-/**
- * Check if user is authenticated
- * @returns {boolean} True if user has valid access token
- */
-function isAuthenticated() {
-  return getAccessToken() !== null;
-}
-
-/**
- * Clear all stored data (logout)
- */
-function clearAll() {
-  clearAccessToken();
-  clearRefreshToken();
-  clearUserProfile();
-  // Don't clear server URL - keep it for next login
+  return getItem('nc_server_url');
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    saveAccessToken,
-    getAccessToken,
-    clearAccessToken,
-    saveRefreshToken,
-    getRefreshToken,
-    clearRefreshToken,
+    initStorage,
+    setItem,
+    getItem,
+    removeItem,
+    clear,
+    saveTokens,
+    getTokens,
+    clearTokens,
     saveUserProfile,
     getUserProfile,
-    clearUserProfile,
     saveServerUrl,
-    getServerUrl,
-    clearServerUrl,
-    isAuthenticated,
-    clearAll
+    getServerUrl
   };
 }
 
