@@ -8,7 +8,7 @@
   
   <!-- Basic Settings -->
   <Id>b3e7c9f2-8d1a-4e6b-9c5f-2a7d8e3b6c1f</Id>
-  <Version>4.0.1.0</Version>
+  <Version>4.0.2.0</Version>
   <ProviderName>ITSL Solutions</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   
@@ -32,7 +32,7 @@
   <!-- App Domains -->
   <AppDomains>
     <AppDomain>https://fredrikjonassonitsb.github.io</AppDomain>
-    <AppDomain>https://9000-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer</AppDomain>
+    <AppDomain>https://dev2.hubs.se</AppDomain>
   </AppDomains>
   
   <!-- Hosts -->
@@ -149,7 +149,7 @@
         </bt:Images>
         <bt:Urls>
           <bt:Url id="Commands.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/commands/commands.html"/>
-          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=4.0.1"/>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/taskpane.html?v=4.0.2"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Nextcloud Talk">

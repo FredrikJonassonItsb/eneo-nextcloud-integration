@@ -6,7 +6,7 @@ const CONFIG = {
   // Nextcloud server configuration
   nextcloud: {
     // Default server URL - should be configured by admin or user
-    serverUrl: 'https://9000-ifssjy14k2l0litjczljm-ba9c44b6.manusvm.computer',
+    serverUrl: 'https://dev2.hubs.se',
     
     // API endpoints
     endpoints: {
@@ -24,8 +24,8 @@ const CONFIG = {
   
   // OAuth2/OIDC configuration
   oauth: {
-    clientId: 'oPi5qe5qaSSUn39eFt94vzetRudUa6gp2cU5rMdDdmF6Bqm5KpMaZrQ6P1KfPC5T',
-    clientSecret: '9XENSRQD40plGu0ypniVN0fYXqmncIXPtZHm4lcILW6XxRKAdmbj8aoCqkuZb6zd',
+    clientId: 'OzzMxgGaC5S8koufQhh9qKJZF8lTi5AhytlCOYzNpwf6aabBll3a3FiypeU9d8vx',
+    clientSecret: 'YGqx6HzcfsfBzxRfTeQ8r',
     redirectUri: 'https://fredrikjonassonitsb.github.io/eneo-nextcloud-integration/outlook-addin/src/taskpane/callback.html',
     scope: 'openid profile email',
     responseType: 'code'
